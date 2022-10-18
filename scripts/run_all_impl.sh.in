@@ -34,9 +34,6 @@ let FAILED=0
 if [ "@HAVE_MPIX_QUERY_ROCM@"  = "1" ] ; then
     ExecTest "hip_query_test"         "1" "1"          "D"
 fi
-ExecTest "hip_scatter"            "4" "1024"       "D H"
-ExecTest "hip_scatterv"           "4" "1024"       "D H"
-ExecTest "hip_reduce_scatter"     "4" "1024"       "D H"
 ExecTest "hip_pt2pt_nb"           "2" "32 1048576" "D H M O R"
 ExecTest "hip_sendtoself"         "1" "32 1048576" "D H M O R"
 ExecTest "hip_pack"               "1" "32"         "D H M O R"
@@ -62,4 +59,7 @@ ExecTest "hip_allgather"          "4" "1024"       "D H"
 ExecTest "hip_allgatherv"         "4" "1024"       "D H"
 ExecTest "hip_gather"             "4" "1024"       "D H"
 ExecTest "hip_gatherv"            "4" "1024"       "D H"
+ExecTest "hip_scatter"            "4" "1024"       "D H"
+ExecTest "hip_scatterv"           "4" "1024"       "D H"
+ExecTest "hip_reduce_scatter"     "4" "1024"       "D H"
 printf "\n Executed %d Tests (%d passed %d failed)\n" $COUNTER $SUCCESS $FAILED
