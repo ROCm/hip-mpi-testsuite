@@ -147,10 +147,34 @@ int scatter_test(void *sendbuf, void *recvbuf, int count,
                  int niterations)
 {
     int ret;
+#if defined HIP_MPITEST_SCATTERV
+    int *send_counts, *send_displs;
+    int size;
+
+    MPI_Comm_size(comm, &size);
+
+    send_counts = (int *)malloc(size * sizeof(int));
+    send_displs = (int *)malloc(size * sizeof(int));
+    if (NULL == send_counts || NULL == send_displs)
+    {
+        printf("scatterv test: Could not allocate memory\n");
+        return MPI_ERR_OTHER;
+    }
+
+    for (int i = 0; i < size; i++)
+    {
+        send_counts[i] = count;
+        send_displs[i] = i * count;
+    }
+#endif
+
     for (int i = 0; i < niterations; i++)
     {
+#if defined HIP_MPITEST_SCATTERV
+        ret = MPI_Scatterv(sendbuf, send_counts, send_displs, datatype, recvbuf, count, datatype, 0, comm);
+#else
         ret = MPI_Scatter(sendbuf, count, datatype, recvbuf, count, datatype, 0, comm);
-
+#endif
         if (MPI_SUCCESS != ret)
         {
             return ret;

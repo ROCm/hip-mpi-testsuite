@@ -37,8 +37,8 @@ all:	$(EXECS)
 hip_scatter: hip_scatter.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_scatter hip_scatter.cc $(LDFLAGS)
 
-hip_scatterv: hip_scatterv.cc $(HEADERS)
-	$(CXX) $(CPPFLAGS) -o hip_scatterv hip_scatterv.cc $(LDFLAGS)
+hip_scatterv: hip_scatter.cc $(HEADERS)
+	$(CXX) $(CPPFLAGS) -o hip_scatterv hip_scatter.cc -DHIP_MPITEST_SCATTERV $(LDFLAGS)
 
 hip_reduce_scatter: hip_reduce_scatter.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_reduce_scatter hip_reduce_scatter.cc $(LDFLAGS)
