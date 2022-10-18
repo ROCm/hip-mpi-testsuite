@@ -25,19 +25,16 @@ static void init_sendbuf(double *sendbuf, int count, int mynode)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     int c = count / size;
     // The data to be sent to each destination rank is the destination's rank
-    for (int j = 0; j < size; j++)
-    {
+    for (int j = 0; j < size; j++) {
         double result = (double)j;
-        for (int i = 0; i < c; i++, l++)
-        {
+        for (int i = 0; i < c; i++, l++) {
             sendbuf[l] = result;
         }
     }
 }
 static void init_recvbuf(double *recvbuf, int count)
 {
-    for (int i = 0; i < count; i++)
-    {
+    for (int i = 0; i < count; i++) {
         recvbuf[i] = 0.0;
     }
 }
@@ -48,10 +45,8 @@ static bool check_recvbuf(double *recvbuf, int nprocs, int rank, int count)
     int l = 0;
     // The data at each rank must be its own rank
     double result = (double)rank;
-    for (int i = 0; i < count; i++, l++)
-    {
-        if (recvbuf[l] != result)
-        {
+    for (int i = 0; i < count; i++, l++) {
+        if (recvbuf[l] != result) {
             res = false;
 #ifdef VERBOSE
             printf("recvbuf[%d] = %d\n", i, recvbuf[l]);
@@ -94,8 +89,7 @@ int main(int argc, char *argv[])
     // Warmup
     res = scatter_test(sendbuf->get_buffer(), recvbuf->get_buffer(), elements,
                        MPI_DOUBLE, MPI_COMM_WORLD, 1);
-    if (MPI_SUCCESS != res)
-    {
+    if (MPI_SUCCESS != res) {
         fprintf(stderr, "Error in scatter_test. Aborting\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
         return 1;
@@ -106,8 +100,7 @@ int main(int argc, char *argv[])
     auto t1s = std::chrono::high_resolution_clock::now();
     res = scatter_test(sendbuf->get_buffer(), recvbuf->get_buffer(), elements,
                        MPI_DOUBLE, MPI_COMM_WORLD, NITER);
-    if (MPI_SUCCESS != res)
-    {
+    if (MPI_SUCCESS != res) {
         fprintf(stderr, "Error in scatter_test. Aborting\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
         return 1;
@@ -117,13 +110,11 @@ int main(int argc, char *argv[])
 
     // verify results
     bool ret = true;
-    if (recvbuf->NeedsStagingBuffer())
-    {
+    if (recvbuf->NeedsStagingBuffer()) {
         HIP_CHECK(recvbuf->CopyFrom(tmp_recvbuf, elements * size * sizeof(double)));
         ret = check_recvbuf(tmp_recvbuf, size, rank, elements);
     }
-    else
-    {
+    else {
         ret = check_recvbuf((double *)recvbuf->get_buffer(), size, rank, elements);
     }
 
@@ -155,28 +146,24 @@ int scatter_test(void *sendbuf, void *recvbuf, int count,
 
     send_counts = (int *)malloc(size * sizeof(int));
     send_displs = (int *)malloc(size * sizeof(int));
-    if (NULL == send_counts || NULL == send_displs)
-    {
+    if (NULL == send_counts || NULL == send_displs) {
         printf("scatterv test: Could not allocate memory\n");
         return MPI_ERR_OTHER;
     }
 
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         send_counts[i] = count;
         send_displs[i] = i * count;
     }
 #endif
 
-    for (int i = 0; i < niterations; i++)
-    {
+    for (int i = 0; i < niterations; i++) {
 #if defined HIP_MPITEST_SCATTERV
         ret = MPI_Scatterv(sendbuf, send_counts, send_displs, datatype, recvbuf, count, datatype, 0, comm);
 #else
         ret = MPI_Scatter(sendbuf, count, datatype, recvbuf, count, datatype, 0, comm);
 #endif
-        if (MPI_SUCCESS != ret)
-        {
+        if (MPI_SUCCESS != ret) {
             return ret;
         }
     }
