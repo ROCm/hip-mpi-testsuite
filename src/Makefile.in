@@ -8,6 +8,9 @@ HEADERS = hip_mpitest_utils.h hip_mpitest_buffer.h hip_mpitest_datatype.h
 
 
 EXECS = hip_pt2pt_nb           \
+	hip_scatter            \
+	hip_scatterv           \
+	hip_reduce_scatter     \
 	hip_sendtoself         \
 	hip_pack               \
 	hip_unpack             \
@@ -31,6 +34,15 @@ EXECS = hip_pt2pt_nb           \
 
 all:	$(EXECS)
 
+hip_scatter: hip_scatter.cc $(HEADERS)
+	$(CXX) $(CPPFLAGS) -o hip_scatter hip_scatter.cc $(LDFLAGS)
+
+hip_scatterv: hip_scatter.cc $(HEADERS)
+	$(CXX) $(CPPFLAGS) -o hip_scatterv hip_scatter.cc -DHIP_MPITEST_SCATTERV $(LDFLAGS)
+
+hip_reduce_scatter: hip_reduce_scatter.cc $(HEADERS)
+	$(CXX) $(CPPFLAGS) -o hip_reduce_scatter hip_reduce_scatter.cc $(LDFLAGS)
+	
 hip_pt2pt_nb: hip_pt2pt_nb.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_pt2pt_nb hip_pt2pt_nb.cc $(LDFLAGS)
 
@@ -98,6 +110,7 @@ endif
 
 clean:
 	$(RM) *.o *~
+	$(RM) hip_scatter hip_scatterv hip_reduce_scatter
 	$(RM) hip_pt2pt_nb hip_sendtoself hip_pack hip_unpack
 	$(RM) hip_allreduce hip_reduce hip_alltoall hip_alltoallv
 	$(RM) hip_allgather hip_allgatherv hip_gather hip_gatherv
