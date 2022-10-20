@@ -47,6 +47,7 @@ hip_osc_put_lock
 hip_pack
 hip_unpack
 hip_pt2pt_nb
+hip_pt2pt_bl
 hip_query_test
 hip_sendtoself
 hip_type_resized_long
