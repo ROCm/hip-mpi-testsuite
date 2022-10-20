@@ -102,8 +102,6 @@ int main(int argc, char *argv[])
         ret = check_recvbuf((int *)recvbuf->get_buffer(), nProcs, rank, elements);
     }
     bool fret = report_testresult(argv[0], MPI_COMM_WORLD, sendbuf->get_memchar(), recvbuf->get_memchar(), ret);
-    report_performance(argv[0], MPI_COMM_WORLD, sendbuf->get_memchar(), recvbuf->get_memchar(), elements,
-                       (size_t)(elements * sizeof(int)), 0, 0.0);
 
     // Cleanup dynamic buffers
     FREE_BUFFER(sendbuf, tmp_sendbuf);
@@ -125,7 +123,6 @@ int type_p2p_bl_test(int *sbuf, int *rbuf, int count, MPI_Comm comm)
     MPI_Comm_size(comm, &size);
     MPI_Comm_rank(comm, &rank);
 
-    for (int i = 0; i < size; i++) {
         if (rank == 0) {
             ret = MPI_Send(sbuf, count, MPI_INT, 1, tag, comm);
             if (MPI_SUCCESS != ret) {
@@ -138,7 +135,6 @@ int type_p2p_bl_test(int *sbuf, int *rbuf, int count, MPI_Comm comm)
         }
         if (rank == 1) {
             ret = MPI_Recv(rbuf, count, MPI_INT, 0, tag, comm, &status);
-
             if (MPI_SUCCESS != ret) {
                 return ret;
             }
@@ -147,7 +143,6 @@ int type_p2p_bl_test(int *sbuf, int *rbuf, int count, MPI_Comm comm)
                 return ret;
             }
         }
-    }
 
     return MPI_SUCCESS;
 }
