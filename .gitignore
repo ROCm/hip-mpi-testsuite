@@ -48,6 +48,7 @@ hip_pack
 hip_unpack
 hip_pt2pt_nb
 hip_pt2pt_bl
+hip_pt2pt_persistent
 hip_query_test
 hip_sendtoself
 hip_type_resized_long
