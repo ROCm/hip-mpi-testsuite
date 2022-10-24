@@ -35,12 +35,10 @@ static bool check_recvbuf (int *recvbuf, int nProcs, int rank, int count)
     int  l=0;
 
     for (int recvrank=0; recvrank < nProcs; recvrank++) {
-#if not defined HIP_MPITEST_PERSISTENT_P2P
         if (recvrank == rank) {
             l += count;
             continue; //No send-to-self for right now
         }
-#endif
         for (int i=0; i < count; i++, l++) {
             if (recvbuf[l] != recvrank + 1) {
                 res = false;
@@ -79,6 +77,15 @@ int main (int argc, char *argv[])
                         rank, MPI_COMM_WORLD, init_recvbuf);
 
     //execute point-to-point operations
+#if defined HIP_MPITEST_PERSISTENT_P2P
+    int res = type_p2p_persistent_test ((int *)sendbuf->get_buffer(), (int *)recvbuf->get_buffer(),
+                                elements, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != res) {
+        printf("Error in type_p2p_persistent_test. Aborting\n");
+        MPI_Abort (MPI_COMM_WORLD, 1);
+        return 1;
+    }
+#else
     int res = type_p2p_nb_test ((int *)sendbuf->get_buffer(), (int *)recvbuf->get_buffer(),
                                 elements, MPI_COMM_WORLD);
     if (MPI_SUCCESS != res) {
@@ -86,7 +93,8 @@ int main (int argc, char *argv[])
         MPI_Abort (MPI_COMM_WORLD, 1);
         return 1;
     }
-
+#endif
+    
     // verify results
     bool ret;
     if (recvbuf->NeedsStagingBuffer()) {
@@ -130,40 +138,65 @@ int type_p2p_nb_test (int *sbuf, int *rbuf, int count, MPI_Comm comm)
     }
 
     for (int i=0; i<size; i++) {
-#if not defined HIP_MPITEST_PERSISTENT_P2P
         if (i == rank) {
             // No send-to-self for the moment
             reqs[2*i]   = MPI_REQUEST_NULL;
             reqs[2*i+1] = MPI_REQUEST_NULL;
             continue;
         }
-#endif
         recvbuf = &rbuf[i*count];
-#if defined HIP_MPITEST_PERSISTENT_P2P
-        ret = MPI_Recv_init (recvbuf, count, MPI_INT, i, tag, comm, &reqs[2*i]);
-#else
         ret = MPI_Irecv (recvbuf, count, MPI_INT, i, tag, comm, &reqs[2*i]);
-
-#endif
         if (MPI_SUCCESS != ret) {
             return ret;
         }
         sendbuf = &sbuf[i*count];
-#if defined HIP_MPITEST_PERSISTENT_P2P
-        ret = MPI_Send_init (sendbuf, count, MPI_INT, i, tag, comm, &reqs[2*i+1]);
-#else
         ret = MPI_Isend (sendbuf, count, MPI_INT, i, tag, comm, &reqs[2*i+1]);
-#endif
         if (MPI_SUCCESS != ret) {
             return ret;
         }
     }
-#if defined HIP_MPITEST_PERSISTENT_P2P
+    ret = MPI_Waitall (2*size, reqs, MPI_STATUSES_IGNORE);
+    if (MPI_SUCCESS != ret) {
+        return ret;
+    }
+    free (reqs);
+
+    return MPI_SUCCESS;
+}
+
+int type_p2p_persistent_test (int *sbuf, int *rbuf, int count, MPI_Comm comm)
+{
+    int size, rank, ret;
+    int tag=251;
+    MPI_Request *reqs;
+    int *sendbuf;
+    int *recvbuf;
+
+    MPI_Comm_size (comm, &size);
+    MPI_Comm_rank (comm, &rank);
+
+    reqs = (MPI_Request*)malloc (2*size*sizeof(MPI_Request));
+    if (NULL == reqs) {
+        printf("4. Could not allocate memory. Aborting\n");
+        MPI_Abort(comm, 1);
+    }
+
+    for (int i=0; i<size; i++) {
+        recvbuf = &rbuf[i*count];
+        ret = MPI_Recv_init (recvbuf, count, MPI_INT, i, tag, comm, &reqs[2*i]);
+        if (MPI_SUCCESS != ret) {
+            return ret;
+        }
+        sendbuf = &sbuf[i*count];
+        ret = MPI_Send_init (sendbuf, count, MPI_INT, i, tag, comm, &reqs[2*i+1]);
+        if (MPI_SUCCESS != ret) {
+            return ret;
+        }
+    }
     ret = MPI_Startall (2*size, reqs);
     if (MPI_SUCCESS != ret) {
         return ret;
     }
-#endif
     ret = MPI_Waitall (2*size, reqs, MPI_STATUSES_IGNORE);
     if (MPI_SUCCESS != ret) {
         return ret;
