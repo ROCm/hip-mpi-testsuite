@@ -53,6 +53,7 @@ static bool check_recvbuf (int *recvbuf, int nProcs, int rank, int count)
 }
 
 int type_p2p_nb_test (int *sendbuf, int *recvbuf, int count, MPI_Comm comm);
+int type_p2p_persistent_test (int *sendbuf, int *recvbuf, int count, MPI_Comm comm);
 
 int main (int argc, char *argv[])
 {
@@ -77,6 +78,15 @@ int main (int argc, char *argv[])
                         rank, MPI_COMM_WORLD, init_recvbuf);
 
     //execute point-to-point operations
+#if defined HIP_MPITEST_PERSISTENT_P2P
+    int res = type_p2p_persistent_test ((int *)sendbuf->get_buffer(), (int *)recvbuf->get_buffer(),
+                                elements, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != res) {
+        printf("Error in type_p2p_persistent_test. Aborting\n");
+        MPI_Abort (MPI_COMM_WORLD, 1);
+        return 1;
+    }
+#else
     int res = type_p2p_nb_test ((int *)sendbuf->get_buffer(), (int *)recvbuf->get_buffer(),
                                 elements, MPI_COMM_WORLD);
     if (MPI_SUCCESS != res) {
@@ -84,7 +94,8 @@ int main (int argc, char *argv[])
         MPI_Abort (MPI_COMM_WORLD, 1);
         return 1;
     }
-
+#endif
+    
     // verify results
     bool ret;
     if (recvbuf->NeedsStagingBuffer()) {
@@ -145,7 +156,48 @@ int type_p2p_nb_test (int *sbuf, int *rbuf, int count, MPI_Comm comm)
             return ret;
         }
     }
+    ret = MPI_Waitall (2*size, reqs, MPI_STATUSES_IGNORE);
+    if (MPI_SUCCESS != ret) {
+        return ret;
+    }
+    free (reqs);
 
+    return MPI_SUCCESS;
+}
+
+int type_p2p_persistent_test (int *sbuf, int *rbuf, int count, MPI_Comm comm)
+{
+    int size, rank, ret;
+    int tag=251;
+    MPI_Request *reqs;
+    int *sendbuf;
+    int *recvbuf;
+
+    MPI_Comm_size (comm, &size);
+    MPI_Comm_rank (comm, &rank);
+
+    reqs = (MPI_Request*)malloc (2*size*sizeof(MPI_Request));
+    if (NULL == reqs) {
+        printf("4. Could not allocate memory. Aborting\n");
+        MPI_Abort(comm, 1);
+    }
+
+    for (int i=0; i<size; i++) {
+        recvbuf = &rbuf[i*count];
+        ret = MPI_Recv_init (recvbuf, count, MPI_INT, i, tag, comm, &reqs[2*i]);
+        if (MPI_SUCCESS != ret) {
+            return ret;
+        }
+        sendbuf = &sbuf[i*count];
+        ret = MPI_Send_init (sendbuf, count, MPI_INT, i, tag, comm, &reqs[2*i+1]);
+        if (MPI_SUCCESS != ret) {
+            return ret;
+        }
+    }
+    ret = MPI_Startall (2*size, reqs);
+    if (MPI_SUCCESS != ret) {
+        return ret;
+    }
     ret = MPI_Waitall (2*size, reqs, MPI_STATUSES_IGNORE);
     if (MPI_SUCCESS != ret) {
         return ret;

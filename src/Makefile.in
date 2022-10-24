@@ -51,8 +51,8 @@ hip_pt2pt_bl: hip_pt2pt_bl.cc $(HEADERS)
 hip_pt2pt_nb: hip_pt2pt_nb.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_pt2pt_nb hip_pt2pt_nb.cc $(LDFLAGS)
 
-hip_pt2pt_persistent: hip_pt2pt_persistent.cc $(HEADERS)
-	$(CXX) $(CPPFLAGS) -o hip_pt2pt_persistent hip_pt2pt_persistent.cc $(LDFLAGS)
+hip_pt2pt_persistent: hip_pt2pt_nb.cc $(HEADERS)
+	$(CXX) $(CPPFLAGS) -o hip_pt2pt_persistent hip_pt2pt_nb.cc -DHIP_MPITEST_PERSISTENT_P2P $(LDFLAGS)
 
 hip_sendtoself: hip_sendtoself.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_sendtoself hip_sendtoself.cc $(LDFLAGS)
