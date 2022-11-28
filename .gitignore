@@ -29,6 +29,7 @@
 
 # Executables
 hip_allreduce
+hip_iallreduce
 hip_allgather
 hip_allgatherv
 hip_alltoall
@@ -36,6 +37,7 @@ hip_alltoallv
 hip_gather
 hip_gatherv
 hip_reduce
+hip_ireduce
 hip_scatter
 hip_scatterv
 hip_reduce_scatter

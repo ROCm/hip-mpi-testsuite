@@ -8,7 +8,7 @@ HEADERS = hip_mpitest_utils.h hip_mpitest_buffer.h hip_mpitest_datatype.h
 
 
 EXECS = hip_pt2pt_nb           \
-    hip_pt2pt_bl           \
+        hip_pt2pt_bl           \
 	hip_pt2pt_bsend        \
 	hip_pt2pt_persistent   \
 	hip_scatter            \
@@ -23,6 +23,8 @@ EXECS = hip_pt2pt_nb           \
 	hip_type_resized_long  \
 	hip_allreduce          \
 	hip_reduce             \
+	hip_iallreduce         \
+	hip_ireduce            \
 	hip_alltoall           \
 	hip_alltoallv          \
 	hip_allgather          \
@@ -74,6 +76,12 @@ hip_allreduce: hip_allreduce.cc $(HEADERS)
 
 hip_reduce: hip_allreduce.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_reduce hip_allreduce.cc -DHIP_MPITEST_REDUCE $(LDFLAGS)
+
+hip_iallreduce: hip_iallreduce.cc $(HEADERS)
+	$(CXX) $(CPPFLAGS) -o hip_iallreduce hip_iallreduce.cc $(LDFLAGS)
+
+hip_ireduce: hip_iallreduce.cc $(HEADERS)
+	$(CXX) $(CPPFLAGS) -o hip_ireduce hip_iallreduce.cc -DHIP_MPITEST_IREDUCE $(LDFLAGS)
 
 hip_alltoall: hip_alltoall.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_alltoall hip_alltoall.cc $(LDFLAGS)
@@ -132,7 +140,7 @@ clean:
 	$(RM) *.o *~
 	$(RM) hip_scatter hip_scatterv hip_reduce_scatter
 	$(RM) hip_pt2pt_nb hip_pt2pt_bl hip_sendtoself hip_pack hip_unpack hip_pt2pt_persistent hip_pt2pt_bsend
-	$(RM) hip_allreduce hip_reduce hip_alltoall hip_alltoallv
+	$(RM) hip_allreduce hip_reduce hip_iallreduce hip_ireduce hip_alltoall hip_alltoallv
 	$(RM) hip_allgather hip_allgatherv hip_gather hip_gatherv
 	$(RM) hip_type_resized_short hip_type_struct_short
 	$(RM) hip_type_resized_long hip_type_struct_long

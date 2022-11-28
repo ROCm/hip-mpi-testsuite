@@ -57,6 +57,8 @@ if [ "@HIP_UCC_SUPPORT@" = "0" ] ; then
 else
     ExecTest "hip_allreduce"          "4" "32 1048576" "D"
     ExecTest "hip_reduce"             "4" "32 1048576" "D"
+    ExecTest "hip_iallreduce"         "4" "32 1048576" "D"
+    ExecTest "hip_ireduce"            "4" "32 1048576" "D"
 fi
 ExecTest "hip_alltoall"           "4" "1024"       "D H"
 ExecTest "hip_alltoallv"          "4" "1024"       "D H"
