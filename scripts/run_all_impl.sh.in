@@ -34,6 +34,7 @@ let FAILED=0
 if [ "@HAVE_MPIX_QUERY_ROCM@"  = "1" ] ; then
     ExecTest "hip_query_test"         "1" "1"          "D"
 fi
+ExecTest "hip_pt2pt_nb_stress"    "2" "32 1048576" "D H M O R"
 ExecTest "hip_pt2pt_bl"           "2" "32 1048576" "D H M O R"
 ExecTest "hip_pt2pt_bsend"        "2" "32 1048576" "D H M O R"
 ExecTest "hip_pt2pt_nb"           "2" "32 1048576" "D H M O R"
