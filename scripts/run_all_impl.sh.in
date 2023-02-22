@@ -37,6 +37,7 @@ fi
 ExecTest "hip_pt2pt_bl"           "2" "32 1048576" "D H M O R"
 ExecTest "hip_pt2pt_bsend"        "2" "32 1048576" "D H M O R"
 ExecTest "hip_pt2pt_nb"           "2" "32 1048576" "D H M O R"
+ExecTest "hip_pt2pt_nb_mpi_testall" "2" "32 1048576" "D H M O R"
 ExecTest "hip_pt2pt_persistent"   "2" "32 1048576" "D H M O R"
 ExecTest "hip_sendtoself"         "1" "32 1048576" "D H M O R"
 ExecTest "hip_pack"               "1" "32"         "D H M O R"

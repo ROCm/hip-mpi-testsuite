@@ -53,6 +53,7 @@ static bool check_recvbuf (int *recvbuf, int nProcs, int rank, int count)
 }
 
 int type_p2p_nb_test (int *sendbuf, int *recvbuf, int count, MPI_Comm comm);
+int type_p2p_nb_mpi_testall_test (int *sendbuf, int *recvbuf, int count, MPI_Comm comm);
 int type_p2p_persistent_test (int *sendbuf, int *recvbuf, int count, MPI_Comm comm);
 
 int main (int argc, char *argv[])
@@ -123,7 +124,7 @@ int main (int argc, char *argv[])
 
 int type_p2p_nb_test (int *sbuf, int *rbuf, int count, MPI_Comm comm)
 {
-    int size, rank, ret;
+    int size, rank, ret, completion_flag = 0;
     int tag=251;
     MPI_Request *reqs;
     int *sendbuf;
@@ -156,12 +157,23 @@ int type_p2p_nb_test (int *sbuf, int *rbuf, int count, MPI_Comm comm)
             return ret;
         }
     }
+#if defined HIP_MPITEST_MPI_TESTALL_P2P
+    while (!completion_flag) {
+        usleep(1);
+        ret = MPI_Testall (2*size, reqs, &completion_flag, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != ret) {
+            return ret;
+            break;
+        }
+    }
+#else
     ret = MPI_Waitall (2*size, reqs, MPI_STATUSES_IGNORE);
     if (MPI_SUCCESS != ret) {
         return ret;
     }
-    free (reqs);
+#endif
 
+    free (reqs);
     return MPI_SUCCESS;
 }
 
@@ -206,3 +218,4 @@ int type_p2p_persistent_test (int *sbuf, int *rbuf, int count, MPI_Comm comm)
 
     return MPI_SUCCESS;
 }
+
