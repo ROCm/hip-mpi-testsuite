@@ -56,6 +56,7 @@ static bool check_recvbuf(int *recvbuf, int nProcs, int rank, int count)
 
 int type_p2p_bl_test(int *sendbuf, int *recvbuf, int count, MPI_Comm comm);
 int type_p2p_bsend_test(int *sendbuf, int *recvbuf, int count, MPI_Comm comm);
+int type_p2p_ssend_test(int *sendbuf, int *recvbuf, int count, MPI_Comm comm);
 
 int main(int argc, char *argv[])
 {
@@ -87,10 +88,16 @@ int main(int argc, char *argv[])
     // execute point-to-point operations
 #if defined HIP_MPITEST_BSEND
     int res = type_p2p_bsend_test((int *)sendbuf->get_buffer(), (int *)recvbuf->get_buffer(),
-                               elements, MPI_COMM_WORLD);
+                                elements, MPI_COMM_WORLD);
     if (MPI_SUCCESS != res) {
         printf("Error in type_p2p_bsend_test. Aborting\n");
-        MPI_Abort(MPI_COMM_WORLD, 1);
+        return 1;
+    }
+#elif defined HIP_MPITEST_SSEND
+    int res = type_p2p_ssend_test((int *)sendbuf->get_buffer(), (int *)recvbuf->get_buffer(),
+                                elements, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != res) {
+        printf("Error in type_p2p_ssend_test. Aborting\n");
         return 1;
     }
 #else
@@ -198,6 +205,38 @@ int type_p2p_bsend_test(int *sbuf, int *rbuf, int count, MPI_Comm comm)
 
     MPI_Buffer_detach(&buffer, &buffersize);
     delete (buffer);
+
+    return MPI_SUCCESS;
+}
+
+int type_p2p_ssend_test(int *sbuf, int *rbuf, int count, MPI_Comm comm) {
+    int size, rank, ret;
+    int tag = 251;
+
+    MPI_Status status;
+
+    MPI_Comm_rank(comm, &rank);
+    MPI_Comm_size(comm, &size);
+
+    if (rank == 0) {
+        ret = MPI_Ssend(sbuf, count, MPI_INT, 1, tag, comm);
+        if (MPI_SUCCESS != ret) {
+            return ret;
+        }
+        ret = MPI_Recv(rbuf, count, MPI_INT, 1, tag, comm, &status);
+        if (MPI_SUCCESS != ret) {
+            return ret;
+        }
+    } else if (rank == 1) {
+        ret = MPI_Recv(rbuf, count, MPI_INT, 0, tag, comm, &status);
+        if (MPI_SUCCESS != ret) {
+            return ret;
+        }
+        ret = MPI_Ssend(sbuf, count, MPI_INT, 0, tag, comm);
+        if (MPI_SUCCESS != ret) {
+            return ret;
+        }
+    }
 
     return MPI_SUCCESS;
 }

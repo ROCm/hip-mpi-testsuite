@@ -60,6 +60,8 @@ static bool check_recvbuf(double *recvbuf, int nprocs, int rank, int count)
 int reduce_scatter_test(void *sendbuf, void *recvbuf, int count,
                         MPI_Datatype datatype, MPI_Comm comm,
                         int niterations);
+int reduce_scatter_block_test(void *sendbuf, void *recvbuf, int blockcount,
+                                MPI_Datatype datatype, MPI_Comm comm, int niterations);
 
 int main(int argc, char *argv[])
 {
@@ -85,6 +87,15 @@ int main(int argc, char *argv[])
     ALLOCATE_RECVBUFFER(recvbuf, tmp_recvbuf, double, size *elements, sizeof(double),
                         rank, MPI_COMM_WORLD, init_recvbuf);
 
+#if defined HIP_MPITEST_REDUCE_SCATTER_BLOCK
+    res = reduce_scatter_block_test(sendbuf->get_buffer(), recvbuf->get_buffer(), elements,
+                                        MPI_DOUBLE, MPI_COMM_WORLD, 1);
+    if (res != MPI_SUCCESS) {
+        fprintf(stderr, "Error in reduce_scatter_block_test. Aborting\n");
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        return 1;
+    }
+#else
     // Warmup
     res = reduce_scatter_test(sendbuf->get_buffer(), recvbuf->get_buffer(), elements,
                               MPI_DOUBLE, MPI_COMM_WORLD, 1);
@@ -93,6 +104,7 @@ int main(int argc, char *argv[])
         MPI_Abort(MPI_COMM_WORLD, 1);
         return 1;
     }
+#endif
 
     // execute the reduce_scatter test
     MPI_Barrier(MPI_COMM_WORLD);
@@ -156,6 +168,24 @@ int reduce_scatter_test(void *sendbuf, void *recvbuf, int count,
         ret = MPI_Reduce_scatter(sendbuf, recvbuf, recv_counts, datatype, MPI_SUM, comm);
 
         if (MPI_SUCCESS != ret) {
+            return ret;
+        }
+    }
+
+    return MPI_SUCCESS;
+}
+
+int reduce_scatter_block_test(void *sendbuf, void *recvbuf, int blockcount,
+                                MPI_Datatype datatype, MPI_Comm comm, int niterations) {
+    int ret;
+    int size;
+
+    MPI_Comm_size(comm, &size);
+
+    for (int i = 0; i < niterations; i++) {
+        ret = MPI_Reduce_scatter_block(sendbuf, recvbuf, blockcount, datatype, MPI_SUM, comm);
+
+        if (ret != MPI_SUCCESS) {
             return ret;
         }
     }

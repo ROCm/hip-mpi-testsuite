@@ -10,39 +10,41 @@ HEADERS = hip_mpitest_utils.h hip_mpitest_buffer.h hip_mpitest_datatype.h
 EXECS = hip_pt2pt_nb           \
         hip_pt2pt_bl           \
 	hip_pt2pt_nb_mpi_testall   \
-	hip_pt2pt_nb_stress    \
-	hip_pt2pt_bsend        \
-	hip_pt2pt_persistent   \
-	hip_scatter            \
-	hip_scatterv           \
-	hip_reduce_scatter     \
-	hip_sendtoself         \
-	hip_sendtoself_stress  \
-	hip_pack               \
-	hip_unpack             \
-	hip_type_struct_short  \
-	hip_type_struct_long   \
-	hip_type_resized_short \
-	hip_type_resized_long  \
-	hip_allreduce          \
-	hip_reduce             \
-	hip_iallreduce         \
-	hip_ireduce            \
-	hip_alltoall           \
-	hip_alltoallv          \
-	hip_allgather          \
-	hip_allgatherv         \
-	hip_gather             \
-	hip_gatherv            \
-	hip_osc_put_fence      \
-	hip_osc_get_fence      \
-	hip_osc_acc_fence      \
-	hip_osc_acc_lock       \
-	hip_osc_put_lock       \
-	hip_file_write         \
-	hip_file_iwrite        \
-	hip_file_read          \
-	hip_file_iread         \
+	hip_pt2pt_nb_stress        \
+	hip_pt2pt_bsend            \
+	hip_pt2pt_ssend            \ 
+	hip_pt2pt_persistent       \
+	hip_scatter                \
+	hip_scatterv               \
+	hip_reduce_scatter         \
+	hip_reduce_scatter_block   \
+	hip_sendtoself             \
+	hip_sendtoself_stress      \
+	hip_pack                   \
+	hip_unpack                 \
+	hip_type_struct_short      \
+	hip_type_struct_long       \
+	hip_type_resized_short     \
+	hip_type_resized_long      \
+	hip_allreduce              \
+	hip_reduce                 \
+	hip_iallreduce             \
+	hip_ireduce                \
+	hip_alltoall               \
+	hip_alltoallv              \
+	hip_allgather              \
+	hip_allgatherv             \
+	hip_gather                 \
+	hip_gatherv                \
+	hip_osc_put_fence          \
+	hip_osc_get_fence          \
+	hip_osc_acc_fence          \
+	hip_osc_acc_lock           \
+	hip_osc_put_lock           \
+	hip_file_write             \
+	hip_file_iwrite            \
+	hip_file_read              \
+	hip_file_iread             \
 	hip_osc_get_lock @HIP_QUERY_TEST@
 
 
@@ -57,11 +59,17 @@ hip_scatterv: hip_scatter.cc $(HEADERS)
 hip_reduce_scatter: hip_reduce_scatter.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_reduce_scatter hip_reduce_scatter.cc $(LDFLAGS)
 
+hip_reduce_scatter_block: hip_reduce_scatter.cc $(HEADERS)
+	$(CXX) $(CPPFLAGS) -o hip_reduce_scatter_block hip_reduce_scatter.cc -DHIP_MPITEST_REDUCE_SCATTER_BLOCK $(LDFLAGS)
+
 hip_pt2pt_bl: hip_pt2pt_bl.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_pt2pt_bl hip_pt2pt_bl.cc $(LDFLAGS)
 
 hip_pt2pt_bsend: hip_pt2pt_bl.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_pt2pt_bsend hip_pt2pt_bl.cc -DHIP_MPITEST_BSEND $(LDFLAGS)
+
+hip_pt2pt_ssend: hip_pt2pt_bl.cc $(HEADERS)
+	$(CXX) $(CPPFLAGS) -o hip_pt2pt_ssend hip_pt2pt_bl.cc -DHIP_MPITEST_SSEND $(LDFLAGS)
 
 hip_pt2pt_nb: hip_pt2pt_nb.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_pt2pt_nb hip_pt2pt_nb.cc $(LDFLAGS)
@@ -166,8 +174,8 @@ endif
 
 clean:
 	$(RM) *.o *~
-	$(RM) hip_scatter hip_scatterv hip_reduce_scatter
-	$(RM) hip_pt2pt_nb hip_pt2pt_nb_mpi_testall hip_pt2pt_nb_stress hip_pt2pt_bl
+	$(RM) hip_scatter hip_scatterv hip_reduce_scatter hip_reduce_scatter_block
+	$(RM) hip_pt2pt_nb hip_pt2pt_nb_mpi_testall hip_pt2pt_nb_stress hip_pt2pt_bl hip_pt2pt_ssend
 	$(RM) hip_sendtoself hip_sendtoself_stress hip_pack hip_unpack hip_pt2pt_persistent hip_pt2pt_bsend
 	$(RM) hip_allreduce hip_reduce hip_iallreduce hip_ireduce hip_alltoall hip_alltoallv
 	$(RM) hip_allgather hip_allgatherv hip_gather hip_gatherv
