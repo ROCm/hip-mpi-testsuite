@@ -41,6 +41,7 @@ hip_ireduce
 hip_scatter
 hip_scatterv
 hip_reduce_scatter
+hip_reduce_scatter_block
 hip_broadcast
 hip_osc_get_fence
 hip_osc_get_lock
@@ -55,6 +56,7 @@ hip_pt2pt_nb_stress
 hip_pt2pt_nb_mpi_testall
 hip_pt2pt_bl
 hip_pt2pt_bsend
+hip_pt2pt_ssend
 hip_pt2pt_persistent
 hip_query_test
 hip_sendtoself
