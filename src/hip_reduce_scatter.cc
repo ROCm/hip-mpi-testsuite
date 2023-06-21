@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
     ALLOCATE_RECVBUFFER(recvbuf, tmp_recvbuf, double, size *elements, sizeof(double),
                         rank, MPI_COMM_WORLD, init_recvbuf);
 
-#if defined HIP_MPITEST_REDUCE_SCATTER_BLOCK
+#ifdef HIP_MPITEST_REDUCE_SCATTER_BLOCK
     res = reduce_scatter_block_test(sendbuf->get_buffer(), recvbuf->get_buffer(), elements,
                                         MPI_DOUBLE, MPI_COMM_WORLD, 1);
     if (res != MPI_SUCCESS) {
@@ -104,7 +104,6 @@ int main(int argc, char *argv[])
         MPI_Abort(MPI_COMM_WORLD, 1);
         return 1;
     }
-#endif
 
     // execute the reduce_scatter test
     MPI_Barrier(MPI_COMM_WORLD);
@@ -118,6 +117,7 @@ int main(int argc, char *argv[])
     }
     auto t1e = std::chrono::high_resolution_clock::now();
     double t1 = std::chrono::duration<double>(t1e - t1s).count();
+#endif
 
     // verify results
     bool ret = true;
@@ -130,8 +130,11 @@ int main(int argc, char *argv[])
     }
 
     bool fret = report_testresult(argv[0], MPI_COMM_WORLD, sendbuf->get_memchar(), recvbuf->get_memchar(), ret);
+
+#ifndef HIP_MPITEST_REDUCE_SCATTER_BLOCK
     report_performance(argv[0], MPI_COMM_WORLD, sendbuf->get_memchar(), recvbuf->get_memchar(),
                        elements, (size_t)(elements * sizeof(double)), NITER, t1);
+#endif
 
     // Free buffers
     FREE_BUFFER(sendbuf, tmp_sendbuf);
