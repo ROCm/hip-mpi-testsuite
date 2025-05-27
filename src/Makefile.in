@@ -47,6 +47,9 @@ EXECS = hip_pt2pt_nb           \
 	hip_type_resized_long      \
 	hip_allreduce              \
 	hip_reduce                 \
+	hip_reduce_local           \
+	hip_bcast                  \
+	hip_ibcast                 \
 	hip_iallreduce             \
 	hip_ireduce                \
 	hip_scan                   \
@@ -149,11 +152,20 @@ hip_iallreduce: hip_iallreduce.cc $(HEADERS)
 hip_ireduce: hip_iallreduce.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_ireduce hip_iallreduce.cc -DHIP_MPITEST_IREDUCE $(LDFLAGS)
 
+hip_reduce_local: hip_reduce_local.cc $(HEADERS)
+	$(CXX) $(CPPFLAGS) -o hip_reduce_local hip_reduce_local.cc $(LDFLAGS)
+
 hip_scan: hip_scan.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_scan hip_scan.cc $(LDFLAGS)
 
 hip_exscan: hip_scan.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_exscan hip_scan.cc -DHIP_MPITEST_EXSCAN $(LDFLAGS)
+
+hip_bcast: hip_bcast.cc $(HEADERS)
+	$(CXX) $(CPPFLAGS) -o hip_bcast hip_bcast.cc $(LDFLAGS)
+
+hip_ibcast: hip_bcast.cc $(HEADERS)
+	$(CXX) $(CPPFLAGS) -o hip_ibcast hip_bcast.cc -DHIP_MPITEST_IBCAST $(LDFLAGS)
 
 hip_alltoall: hip_alltoall.cc $(HEADERS)
 	$(CXX) $(CPPFLAGS) -o hip_alltoall hip_alltoall.cc $(LDFLAGS)
@@ -255,8 +267,8 @@ clean:
 	$(RM) hip_scatter hip_scatterv hip_reduce_scatter hip_reduce_scatter_block
 	$(RM) hip_pt2pt_nb hip_pt2pt_nb_testall hip_pt2pt_nb_stress hip_pt2pt_bl hip_pt2pt_bl_mult hip_pt2pt_ssend
 	$(RM) hip_sendtoself hip_sendtoself_stress hip_pack hip_unpack hip_pt2pt_persistent hip_pt2pt_bsend
-	$(RM) hip_allreduce hip_reduce hip_iallreduce hip_ireduce hip_alltoall hip_alltoallv
-	$(RM) hip_allgather hip_allgatherv hip_gather hip_gatherv hip_scan hip_exscan
+	$(RM) hip_allreduce hip_reduce hip_iallreduce hip_ireduce hip_alltoall hip_alltoallv hip_reduce_local
+	$(RM) hip_allgather hip_allgatherv hip_gather hip_gatherv hip_scan hip_exscan hip_bcast hip_ibcast
 	$(RM) hip_type_resized_short hip_type_struct_short
 	$(RM) hip_type_resized_long hip_type_struct_long
 	$(RM) hip_osc_put_fence hip_osc_get_fence hip_osc_acc_fence hip_osc_acc_lock hip_osc_put_lock hip_osc_get_lock

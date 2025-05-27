@@ -37,6 +37,7 @@ hip_alltoallv
 hip_gather
 hip_gatherv
 hip_reduce
+hip_reduce_local
 hip_ireduce
 hip_scatter
 hip_scatterv
@@ -68,6 +69,8 @@ hip_sendtoself
 hip_sendtoself_stress
 hip_scan
 hip_exscan
+hip_bcast
+hip_ibcast
 hip_memkind
 hip_memkind_sessions
 hip_type_resized_long
