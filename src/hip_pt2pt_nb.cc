@@ -237,6 +237,9 @@ int type_p2p_persistent_test (int *sbuf, int *rbuf, int count, MPI_Comm comm)
     if (MPI_SUCCESS != ret) {
         goto out;
     }
+    for (int i=0; i<size*2; i++) {
+        MPI_Request_free(&reqs[i]);
+    }
 
  out:
     free (reqs);
