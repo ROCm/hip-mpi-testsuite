@@ -24,6 +24,9 @@
 #ifndef __HIP_MPITEST_UTILS__
 #define __HIP_MPITEST_UTILS__
 
+#include <cassert>
+#include <cerrno>
+
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
