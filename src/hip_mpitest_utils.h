@@ -48,6 +48,15 @@
     }
 
 
+#if HIP_MPITEST_HAVE_VMM
+#define SET_MEMBUF_TYPE_VMM(_bufchar, _membuf)                      \
+   else if (strncmp(_bufchar, "V", 1) == 0) {                       \
+       _membuf = new hip_mpitest_buffer_vmm;                         \
+   }
+#else
+#define SET_MEMBUF_TYPE_VMM(_bufchar, _membuf)
+#endif
+
 #define SET_MEMBUF_TYPE(_bufchar, _membuf, _argc, _argv, _comm) {  \
    if (strncmp(_bufchar, "D", 1) == 0 ){                     \
        _membuf = new hip_mpitest_buffer_device;              \
@@ -64,6 +73,7 @@
    else if (strncmp(_bufchar, "R", 1) == 0) {                \
        _membuf = new hip_mpitest_buffer_hostregister;        \
    }                                                         \
+   SET_MEMBUF_TYPE_VMM(_bufchar, _membuf)                    \
    else {                                                    \
        printf("Invalid input %s\n", _bufchar);               \
        print_help(_argc, _argv);                             \
@@ -89,6 +99,7 @@ static void print_help (int argc, char **argv)
                "         M      Unified memory (i.e hipMallocManaged)\n"
                "         O      Device accessible page locked host memory (i.e. hipHostMalloc)\n"
                "         R      Registered host memory (i.e. hipHostRegister)\n"
+               "         V      Virtual Memory Management device memory (hipMemCreate/Map)\n"
 	       "   elements:  number of elements to send/recv\n"
                "   sleepTime: time in seconds to sleep (optional)\n");
     }

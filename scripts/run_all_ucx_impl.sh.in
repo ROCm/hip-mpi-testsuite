@@ -121,4 +121,27 @@ ExecTestSingle "hip_osc_rget_stress"  "4" "1024" "D H"
 ExecTestSingle "hip_osc_rput_stress"  "4" "1024" "D H"
 ExecTest "hip_pt2pt_bl"             "2" "10 876 19680 980571" "D H"
 ExecTest "hip_pt2pt_bl_mult"        "2" "1024" "D H"
+
+if [ "@hip_mpitest_have_vmm@" = "1" ] ; then
+    ExecTest "hip_pt2pt_bl"             "2" "32 1048576" "V"
+    ExecTest "hip_pt2pt_bsend"          "2" "32 1048576" "V"
+    ExecTest "hip_pt2pt_ssend"          "2" "32 1048576" "V"
+    ExecTest "hip_pt2pt_nb"             "2" "32 1048576" "V"
+    ExecTest "hip_pt2pt_nb_testall"     "2" "32 1048576" "V"
+    ExecTest "hip_pt2pt_persistent"     "2" "32 1048576" "V"
+    ExecTest "hip_sendtoself"           "1" "32 1048576" "V"
+    ExecTest "hip_allreduce"            "4" "32 1048576" "V"
+    ExecTest "hip_reduce"               "4" "32 1048576" "V"
+    ExecTest "hip_alltoall"             "4" "1024"       "V"
+    ExecTest "hip_alltoallv"            "4" "1024"       "V"
+    ExecTest "hip_allgather"            "4" "1024"       "V"
+    ExecTest "hip_allgatherv"           "4" "1024"       "V"
+    ExecTest "hip_reduce_scatter"       "4" "1024"       "V"
+    ExecTest "hip_reduce_scatter_block" "4" "1024"       "V"
+    ExecTest "hip_scan"                 "4" "1024"       "V"
+    ExecTest "hip_exscan"               "4" "1024"       "V"
+    ExecTest "hip_pt2pt_nb_stress"      "2" "32 1048576" "V"
+    ExecTest "hip_sendtoself_stress"    "1" "32 1048576" "V"
+fi
+
 printf "\n Executed %d Tests (%d passed %d failed)\n" $COUNTER $SUCCESS $FAILED

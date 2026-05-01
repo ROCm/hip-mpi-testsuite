@@ -116,8 +116,30 @@ HIP_QUERY_TEST=""
 if [ test "x$HAVE_MPIX_QUERY_ROCM" = "x1" ] ; then
    HIP_QUERY_TEST="hip_query_test"
 fi
-AC_SUBST(HIP_QUERY_TEST)   
+AC_SUBST(HIP_QUERY_TEST)
 AC_SUBST(HAVE_MPIX_QUERY_ROCM)
+
+AC_LANG_PUSH([C++])
+vmm_save_LDFLAGS="$LDFLAGS"
+vmm_save_LIBS="$LIBS"
+LDFLAGS="$hip_rocm_LDFLAGS $LDFLAGS"
+LIBS="$hip_rocm_LIBS $LIBS"
+CXX_HELPER([if HIP VMM APIs are available],
+           [HIP_MPITEST_HAVE_VMM_INT],
+           [#include <hip/hip_runtime.h>],
+           [hipMemGenericAllocationHandle_t h;
+            hipMemCreate(&h, 4096, nullptr, 0);
+            hipMemRelease(h);
+            (void)hipDeviceAttributeVirtualMemoryManagementSupported;])
+LDFLAGS="$vmm_save_LDFLAGS"
+LIBS="$vmm_save_LIBS"
+AC_LANG_POP([C++])
+
+let hip_mpitest_have_vmm=0
+if test "$HIP_MPITEST_HAVE_VMM_INT" = "1" ; then
+    hip_mpitest_have_vmm=1
+fi
+AC_SUBST(hip_mpitest_have_vmm)
 
 ucc_support=no;
 HIP_UCC_SUPPORT=`ompi_info --parsable | grep coll | grep ucc | wc -l`
