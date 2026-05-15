@@ -239,7 +239,7 @@ ExecTestSmCuda2B "hip_pt2pt_nb"             "2" "32 1048576" "D H M O R"
 ExecTestSmCuda2B "hip_pt2pt_nb_stress"      "2" "32 1048576" "D H"
 ExecTestSmCuda2B "hip_pt2pt_bl_mult"        "2" "1024" "D H"
 
-if [ "1" = "1" ] ; then
+if [ "@hip_mpitest_have_vmm@" = "1" ] ; then
     printf "\n Running hipVMM tests with btl/sm + smsc/accelerator and rocm_memcpy_async = false\n"
     ExecTestSm1A_VMM "hip_pt2pt_bl"             "2" "32 1048576" "D V H M O R"
     ExecTestSm1A_VMM "hip_pt2pt_bsend"          "2" "32 1048576" "D V H M O R"

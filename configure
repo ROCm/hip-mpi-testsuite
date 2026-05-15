@@ -6508,7 +6508,7 @@ printf "%s\n" "$as_me: creating final output files" >&6;}
 
 
 
-ac_config_files="$ac_config_files src/hip_mpitest_config.h src/Makefile benchmarks/Makefile Makefile.defs scripts/run_all_ucx_impl.sh"
+ac_config_files="$ac_config_files src/hip_mpitest_config.h src/Makefile benchmarks/Makefile Makefile.defs scripts/run_all_ucx_impl.sh scripts/run_all_no_ucx.sh"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -7215,6 +7215,7 @@ do
     "benchmarks/Makefile") CONFIG_FILES="$CONFIG_FILES benchmarks/Makefile" ;;
     "Makefile.defs") CONFIG_FILES="$CONFIG_FILES Makefile.defs" ;;
     "scripts/run_all_ucx_impl.sh") CONFIG_FILES="$CONFIG_FILES scripts/run_all_ucx_impl.sh" ;;
+    "scripts/run_all_no_ucx.sh") CONFIG_FILES="$CONFIG_FILES scripts/run_all_no_ucx.sh" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
