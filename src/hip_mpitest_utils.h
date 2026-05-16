@@ -52,6 +52,9 @@
 #define SET_MEMBUF_TYPE_VMM(_bufchar, _membuf)                      \
    else if (strncmp(_bufchar, "V", 1) == 0) {                       \
        _membuf = new hip_mpitest_buffer_vmm;                         \
+   }                                                                 \
+   else if (strncmp(_bufchar, "X", 1) == 0) {                       \
+       _membuf = new hip_mpitest_buffer_vmm_host;                    \
    }
 #else
 #define SET_MEMBUF_TYPE_VMM(_bufchar, _membuf)
@@ -100,6 +103,7 @@ static void print_help (int argc, char **argv)
                "         O      Device accessible page locked host memory (i.e. hipHostMalloc)\n"
                "         R      Registered host memory (i.e. hipHostRegister)\n"
                "         V      Virtual Memory Management device memory (hipMemCreate/Map)\n"
+               "         X      VMM device memory with additional host (CPU) access (hipMemCreate/Map+HostAccess)\n"
 	       "   elements:  number of elements to send/recv\n"
                "   sleepTime: time in seconds to sleep (optional)\n");
     }
