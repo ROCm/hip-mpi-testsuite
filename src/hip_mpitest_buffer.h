@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <hip/hip_runtime.h>
+#include "hip_mpitest_config.h"
 
 
 enum HIP_MPITEST_MEMTYPE {
@@ -36,10 +37,12 @@ enum HIP_MPITEST_MEMTYPE {
       HIP_MPITEST_MEMTYPE_MANAGED,
       HIP_MPITEST_MEMTYPE_HOSTMALLOC,
       HIP_MPITEST_MEMTYPE_HOSTREGISTER,
+      HIP_MPITEST_MEMTYPE_VMM,
+      HIP_MPITEST_MEMTYPE_VMM_HOST,
       HIP_MPITEST_MEMTYPE_LAST
 };
 
-const char hip_mpitest_memtype_chars[HIP_MPITEST_MEMTYPE_LAST] = {'H','D','M','O','R'};
+const char hip_mpitest_memtype_chars[HIP_MPITEST_MEMTYPE_LAST] = {'H','D','M','O','R','V','X'};
 
 class hip_mpitest_buffer {
  protected:
@@ -263,6 +266,151 @@ class hip_mpitest_buffer_hostregister: public hip_mpitest_buffer {
 	return hipSuccess;
     }
 };
+
+#if HIP_MPITEST_HAVE_VMM
+class hip_mpitest_buffer_vmm : public hip_mpitest_buffer {
+ protected:
+    hipMemGenericAllocationHandle_t vmm_handle;
+    size_t                          vmm_padded_size;
+
+ public:
+    hip_mpitest_buffer_vmm() {
+        memtype         = HIP_MPITEST_MEMTYPE_VMM;
+        memchar         = 'V';
+        strncpy(memname, "hipMemCreate/Map", 32);
+        vmm_padded_size = 0;
+    }
+
+    bool NeedsStagingBuffer() {
+        return true;
+    }
+
+    hipError_t Allocate(size_t nBytes) {
+        hipError_t err;
+        int        deviceId = 0;
+
+        err = hipGetDevice(&deviceId);
+        if (err != hipSuccess) return err;
+
+        int vmmSupported = 0;
+        err = hipDeviceGetAttribute(&vmmSupported,
+                  hipDeviceAttributeVirtualMemoryManagementSupported, deviceId);
+        if (err != hipSuccess) return err;
+        if (!vmmSupported) return hipErrorNotSupported;
+
+        hipMemAllocationProp prop = {};
+        prop.type                 = hipMemAllocationTypePinned;
+        prop.location.type        = hipMemLocationTypeDevice;
+        prop.location.id          = deviceId;
+        prop.requestedHandleTypes = hipMemHandleTypePosixFileDescriptor;
+
+        size_t granularity = 0;
+        err = hipMemGetAllocationGranularity(&granularity, &prop,
+                  hipMemAllocationGranularityMinimum);
+        if (err != hipSuccess) return err;
+
+        vmm_padded_size = ((nBytes + granularity - 1) / granularity) * granularity;
+
+        err = hipMemCreate(&vmm_handle, vmm_padded_size, &prop, 0);
+        if (err != hipSuccess) return err;
+
+        err = hipMemAddressReserve(&buffer, vmm_padded_size, 0, nullptr, 0);
+        if (err != hipSuccess) {
+            (void)hipMemRelease(vmm_handle);
+            return err;
+        }
+
+        err = hipMemMap(buffer, vmm_padded_size, 0, vmm_handle, 0);
+        if (err != hipSuccess) {
+            (void)hipMemAddressFree(buffer, vmm_padded_size);
+            (void)hipMemRelease(vmm_handle);
+            buffer = nullptr;
+            return err;
+        }
+
+        hipMemAccessDesc accessDesc = {};
+        accessDesc.location.type    = hipMemLocationTypeDevice;
+        accessDesc.location.id      = deviceId;
+        accessDesc.flags            = hipMemAccessFlagsProtReadWrite;
+        err = hipMemSetAccess(buffer, vmm_padded_size, &accessDesc, 1);
+        if (err != hipSuccess) {
+            (void)hipMemUnmap(buffer, vmm_padded_size);
+            (void)hipMemAddressFree(buffer, vmm_padded_size);
+            (void)hipMemRelease(vmm_handle);
+            buffer = nullptr;
+        }
+        return err;
+    }
+
+    hipError_t Free() {
+        hipError_t err1 = hipMemUnmap(buffer, vmm_padded_size);
+        hipError_t err2 = hipMemRelease(vmm_handle);
+        hipError_t err3 = hipMemAddressFree(buffer, vmm_padded_size);
+        buffer          = nullptr;
+        vmm_padded_size = 0;
+        if (err1 != hipSuccess) return err1;
+        if (err2 != hipSuccess) return err2;
+        return err3;
+    }
+
+    hipError_t CopyTo(void *src, size_t nBytes) {
+        hipError_t err = hipMemcpy(buffer, src, nBytes, hipMemcpyDefault);
+        if (err != hipSuccess) return err;
+        return hipStreamSynchronize(0);
+    }
+
+    hipError_t CopyFrom(void *dst, size_t nBytes) {
+        hipError_t err = hipMemcpy(dst, buffer, nBytes, hipMemcpyDefault);
+        if (err != hipSuccess) return err;
+        return hipStreamSynchronize(0);
+    }
+};
+
+/* VMM allocation with host (CPU) access in addition to device access.
+ * hipMemSetAccess is called twice: once for the device (inherited from V)
+ * and once for hipMemLocationTypeHost, making the buffer directly
+ * CPU-dereferenceable without a staging copy. */
+class hip_mpitest_buffer_vmm_host : public hip_mpitest_buffer_vmm {
+ public:
+    hip_mpitest_buffer_vmm_host() {
+        memtype = HIP_MPITEST_MEMTYPE_VMM_HOST;
+        memchar = 'X';
+        strncpy(memname, "hipMemCreate/Map+HostAccess", 32);
+    }
+
+    bool NeedsStagingBuffer() {
+        return false;
+    }
+
+    hipError_t Allocate(size_t nBytes) {
+        hipError_t err = hip_mpitest_buffer_vmm::Allocate(nBytes);
+        if (err != hipSuccess) return err;
+
+        hipMemAccessDesc accessDesc = {};
+        accessDesc.location.type    = hipMemLocationTypeHost;
+        accessDesc.location.id      = 0;
+        accessDesc.flags            = hipMemAccessFlagsProtReadWrite;
+        err = hipMemSetAccess(buffer, vmm_padded_size, &accessDesc, 1);
+        if (err != hipSuccess) {
+            (void)hipMemUnmap(buffer, vmm_padded_size);
+            (void)hipMemAddressFree(buffer, vmm_padded_size);
+            (void)hipMemRelease(vmm_handle);
+            buffer = nullptr;
+        }
+        return err;
+    }
+
+    hipError_t CopyTo(void *src, size_t nBytes) {
+        memcpy(buffer, src, nBytes);
+        return hipSuccess;
+    }
+
+    hipError_t CopyFrom(void *dst, size_t nBytes) {
+        memcpy(dst, buffer, nBytes);
+        return hipSuccess;
+    }
+};
+#endif  /* HIP_MPITEST_HAVE_VMM */
 
 // Some convinience macros
 #define ALLOCATE_SENDBUFFER(_sendbuf, _tmp_sendbuf, _type, _elements, _extent, _rank, _comm, _init, _label) { \
