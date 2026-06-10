@@ -310,19 +310,15 @@ class hip_mpitest_buffer_vmm : public hip_mpitest_buffer {
         if (err != hipSuccess) return err;
 
         vmm_padded_size = ((nBytes + granularity - 1) / granularity) * granularity;
-        printf("VMM Allocate: requested=%zu granularity=%zu padded=%zu device=%d\n",
-               nBytes, granularity, vmm_padded_size, deviceId);
 
         err = hipMemCreate(&vmm_handle, vmm_padded_size, &prop, 0);
         if (err != hipSuccess) return err;
-        printf("VMM Allocate: hipMemCreate succeeded\n");
 
         err = hipMemAddressReserve(&buffer, vmm_padded_size, 0, nullptr, 0);
         if (err != hipSuccess) {
             (void)hipMemRelease(vmm_handle);
             return err;
         }
-        printf("VMM Allocate: hipMemAddressReserve succeeded ptr=%p\n", buffer);
 
         err = hipMemMap(buffer, vmm_padded_size, 0, vmm_handle, 0);
         if (err != hipSuccess) {
@@ -331,7 +327,6 @@ class hip_mpitest_buffer_vmm : public hip_mpitest_buffer {
             buffer = nullptr;
             return err;
         }
-        printf("VMM Allocate: hipMemMap succeeded\n");
 
         hipMemAccessDesc accessDesc = {};
         accessDesc.location.type    = hipMemLocationTypeDevice;
@@ -343,14 +338,11 @@ class hip_mpitest_buffer_vmm : public hip_mpitest_buffer {
             (void)hipMemAddressFree(buffer, vmm_padded_size);
             (void)hipMemRelease(vmm_handle);
             buffer = nullptr;
-        } else {
-            printf("VMM Allocate: hipMemSetAccess succeeded\n");
         }
         return err;
     }
 
     hipError_t Free() {
-        printf("VMM Free: unmapping ptr=%p size=%zu\n", buffer, vmm_padded_size);
         hipError_t err1 = hipMemUnmap(buffer, vmm_padded_size);
         hipError_t err2 = hipMemRelease(vmm_handle);
         hipError_t err3 = hipMemAddressFree(buffer, vmm_padded_size);
@@ -362,14 +354,12 @@ class hip_mpitest_buffer_vmm : public hip_mpitest_buffer {
     }
 
     hipError_t CopyTo(void *src, size_t nBytes) {
-        printf("VMM CopyTo: src=%p dst=%p nBytes=%zu\n", src, buffer, nBytes);
         hipError_t err = hipMemcpy(buffer, src, nBytes, hipMemcpyDefault);
         if (err != hipSuccess) return err;
         return hipStreamSynchronize(0);
     }
 
     hipError_t CopyFrom(void *dst, size_t nBytes) {
-        printf("VMM CopyFrom: src=%p dst=%p nBytes=%zu\n", buffer, dst, nBytes);
         hipError_t err = hipMemcpy(dst, buffer, nBytes, hipMemcpyDefault);
         if (err != hipSuccess) return err;
         return hipStreamSynchronize(0);
@@ -406,8 +396,6 @@ class hip_mpitest_buffer_vmm_host : public hip_mpitest_buffer_vmm {
             (void)hipMemAddressFree(buffer, vmm_padded_size);
             (void)hipMemRelease(vmm_handle);
             buffer = nullptr;
-        } else {
-            printf("VMM Allocate: hipMemSetAccess (host) succeeded\n");
         }
         return err;
     }
