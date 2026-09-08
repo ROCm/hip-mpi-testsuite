@@ -36,10 +36,11 @@ enum HIP_MPITEST_MEMTYPE {
       HIP_MPITEST_MEMTYPE_MANAGED,
       HIP_MPITEST_MEMTYPE_HOSTMALLOC,
       HIP_MPITEST_MEMTYPE_HOSTREGISTER,
+      HIP_MPITEST_MEMTYPE_ASYNC,
       HIP_MPITEST_MEMTYPE_LAST
 };
 
-const char hip_mpitest_memtype_chars[HIP_MPITEST_MEMTYPE_LAST] = {'H','D','M','O','R'};
+const char hip_mpitest_memtype_chars[HIP_MPITEST_MEMTYPE_LAST] = {'H','D','M','O','R','A'};
 
 class hip_mpitest_buffer {
  protected:
@@ -261,6 +262,65 @@ class hip_mpitest_buffer_hostregister: public hip_mpitest_buffer {
     hipError_t CopyFrom(void *dst, size_t nBytes) {
 	memcpy(dst, buffer, nBytes);
 	return hipSuccess;
+    }
+};
+
+class hip_mpitest_buffer_async: public hip_mpitest_buffer {
+    hipStream_t stream;
+ public:
+    hip_mpitest_buffer_async () {
+	memtype = HIP_MPITEST_MEMTYPE_ASYNC;
+	memchar = 'A';
+	strncpy (memname, "hipMallocAsync", 32);
+	stream = nullptr;
+    }
+
+    bool NeedsStagingBuffer() {
+	return true;
+    }
+
+    hipError_t Allocate (size_t nBytes) {
+	hipError_t err = hipStreamCreate(&stream);
+	if (err != hipSuccess) {
+	    return err;
+	}
+	err = hipMallocAsync((void **)&buffer, nBytes, stream);
+	if (err != hipSuccess) {
+	    return err;
+	}
+	// Synchronize so the buffer is safe to hand to MPI / other streams
+	return hipStreamSynchronize(stream);
+    }
+
+    hipError_t Free () {
+	hipError_t err = hipFreeAsync(buffer, stream);
+	if (err != hipSuccess) {
+	    return err;
+	}
+	err = hipStreamSynchronize(stream);
+	if (err != hipSuccess) {
+	    return err;
+	}
+	buffer = NULL;
+	hipError_t derr = hipStreamDestroy(stream);
+	stream = nullptr;
+	return derr;
+    }
+
+    hipError_t CopyTo(void *src, size_t nBytes) {
+	hipError_t err = hipMemcpy(buffer, src, nBytes, hipMemcpyDefault);
+        if (err != hipSuccess) {
+            return err;
+        }
+        return hipStreamSynchronize(0);
+    }
+
+    hipError_t CopyFrom(void *dst, size_t nBytes) {
+	hipError_t err = hipMemcpy(dst, buffer, nBytes, hipMemcpyDefault);
+        if (err != hipSuccess) {
+            return err;
+        }
+        return hipStreamSynchronize(0);
     }
 };
 

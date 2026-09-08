@@ -64,6 +64,9 @@
    else if (strncmp(_bufchar, "R", 1) == 0) {                \
        _membuf = new hip_mpitest_buffer_hostregister;        \
    }                                                         \
+   else if (strncmp(_bufchar, "A", 1) == 0) {                \
+       _membuf = new hip_mpitest_buffer_async;               \
+   }                                                         \
    else {                                                    \
        printf("Invalid input %s\n", _bufchar);               \
        print_help(_argc, _argv);                             \
@@ -89,6 +92,7 @@ static void print_help (int argc, char **argv)
                "         M      Unified memory (i.e hipMallocManaged)\n"
                "         O      Device accessible page locked host memory (i.e. hipHostMalloc)\n"
                "         R      Registered host memory (i.e. hipHostRegister)\n"
+               "         A      Asynchronous device memory (i.e. hipMallocAsync)\n"
 	       "   elements:  number of elements to send/recv\n"
                "   sleepTime: time in seconds to sleep (optional)\n");
     }
