@@ -13,9 +13,16 @@ Usage: executable_name -s <sendBufType> -r <recvBufType> -n <elements> -t <sleep
                   M      Unified memory (i.e hipMallocManaged)
                   O      Device accessible page locked host memory (i.e. hipHostMalloc)
                   R      Registered host memory (i.e. hipHostRegister)
+                  A      Memory allocation using hipMallocAsync
+                  V      Memory allocation using hipMemCreate/Map (Virtual Memory Management)
             elements:  number of elements to send/recv
             sleepTime: time in seconds to sleep
 ```
+
+The `V` (Virtual Memory Management) type is only available when the testsuite is
+built against a ROCm/HIP version that provides the VMM driver APIs, version 7.1.0
+or newer (`configure` reports `enable the VMM ('V') memory type ... 1`). On older
+versions it is compiled out and requesting `-s V`/`-r V` is rejected.
 
 To compile and run all tests in the testsuite 
 
