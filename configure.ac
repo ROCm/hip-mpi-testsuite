@@ -119,13 +119,22 @@ fi
 AC_SUBST(HIP_QUERY_TEST)
 AC_SUBST(HAVE_MPIX_QUERY_ROCM)
 
-# Detect whether the HIP driver Virtual Memory Management (VMM) APIs are
-# available (hipMemCreate/hipMemRelease and the VMM-support device attribute)
-# AND the HIP version is recent enough that the memory is meaningfully usable as
-# VMM over UCX. The 'V' memory type is compiled in only when both hold (see
-# HIP_MPITEST_HAVE_VMM). The version floor mirrors UCX, which only recognizes
-# VMM allocations as HSA_VMEM device memory starting with ROCm/HIP 7.1.0.
+# The VMM ('V') memory type is opt-in. It is compiled in only when ALL of the
+# following hold:
+#   1. the user explicitly requests it with --enable-vmm,
+#   2. the HIP driver VMM APIs are available (hipMemCreate/hipMemRelease and the
+#      VMM-support device attribute), and
+#   3. the HIP version is recent enough that the memory is meaningfully usable
+#      as VMM over UCX.
+# The version floor mirrors UCX, which only recognizes VMM allocations as
+# HSA_VMEM device memory starting with ROCm/HIP 7.1.0. See HIP_MPITEST_HAVE_VMM.
 hip_mpitest_vmm_min_version=70100000
+
+enable_vmm_requested=no
+AC_ARG_ENABLE(vmm,
+[  --enable-vmm            enable the VMM ('V') memory type for testing; also requires ROCm/HIP >= 7.1.0 (default=no)],
+[enable_vmm_requested=yes])
+
 AC_LANG_PUSH([C++])
 vmm_save_LDFLAGS="$LDFLAGS"
 vmm_save_LIBS="$LIBS"
@@ -148,12 +157,16 @@ AC_COMPUTE_INT([hip_mpitest_hip_version], [HIP_VERSION],
 AC_LANG_POP([C++])
 
 let hip_mpitest_have_vmm=0
-if test "$HIP_MPITEST_HAVE_VMM_INT" = "1" && \
-   test "$hip_mpitest_hip_version" -ge "$hip_mpitest_vmm_min_version" ; then
-    hip_mpitest_have_vmm=1
+if test "$enable_vmm_requested" = "yes" ; then
+    if test "$HIP_MPITEST_HAVE_VMM_INT" = "1" && \
+       test "$hip_mpitest_hip_version" -ge "$hip_mpitest_vmm_min_version" ; then
+        hip_mpitest_have_vmm=1
+    else
+        AC_MSG_WARN([--enable-vmm requested but VMM is unavailable (APIs_link=$HIP_MPITEST_HAVE_VMM_INT, HIP_VERSION=$hip_mpitest_hip_version, minimum=$hip_mpitest_vmm_min_version); leaving the VMM memory type disabled.])
+    fi
 fi
 AC_MSG_CHECKING([whether to enable the VMM ('V') memory type])
-AC_MSG_RESULT([$hip_mpitest_have_vmm (HIP_VERSION=$hip_mpitest_hip_version, minimum=$hip_mpitest_vmm_min_version)])
+AC_MSG_RESULT([$hip_mpitest_have_vmm (requested=$enable_vmm_requested, HIP_VERSION=$hip_mpitest_hip_version, minimum=$hip_mpitest_vmm_min_version)])
 AC_SUBST(hip_mpitest_have_vmm)
 
 ucc_support=no;

@@ -19,10 +19,19 @@ Usage: executable_name -s <sendBufType> -r <recvBufType> -n <elements> -t <sleep
             sleepTime: time in seconds to sleep
 ```
 
-The `V` (Virtual Memory Management) type is only available when the testsuite is
-built against a ROCm/HIP version that provides the VMM driver APIs, version 7.1.0
-or newer (`configure` reports `enable the VMM ('V') memory type ... 1`). On older
-versions it is compiled out and requesting `-s V`/`-r V` is rejected.
+The `V` (Virtual Memory Management) type is opt-in. It is compiled in only when
+the testsuite is configured with `--enable-vmm` **and** it is built against a
+ROCm/HIP version that provides the VMM driver APIs, version 7.1.0 or newer:
+
+```
+./configure CXX=mpiCC --with-rocm=/opt/rocm --enable-vmm
+```
+
+`configure` reports `enable the VMM ('V') memory type ... 1` when it is active.
+Without `--enable-vmm` (the default), or on an older ROCm version, the `V` type
+is compiled out and requesting `-s V`/`-r V` is rejected. If `--enable-vmm` is
+passed but the ROCm version is too old, configure prints a warning and leaves it
+disabled.
 
 To compile and run all tests in the testsuite 
 
