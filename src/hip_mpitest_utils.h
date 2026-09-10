@@ -48,6 +48,19 @@
     }
 
 
+/* VMM ('V') dispatch is compiled only when the HIP VMM driver APIs were
+ * detected at configure time. A preprocessor conditional cannot live inside a
+ * macro body, so the VMM else-if is factored into its own macro that expands to
+ * nothing when HIP_MPITEST_HAVE_VMM is 0. */
+#if HIP_MPITEST_HAVE_VMM
+#define SET_MEMBUF_TYPE_VMM(_bufchar, _membuf)               \
+   else if (strncmp(_bufchar, "V", 1) == 0) {                \
+       _membuf = new hip_mpitest_buffer_vmm;                 \
+   }
+#else
+#define SET_MEMBUF_TYPE_VMM(_bufchar, _membuf)
+#endif
+
 #define SET_MEMBUF_TYPE(_bufchar, _membuf, _argc, _argv, _comm) {  \
    if (strncmp(_bufchar, "D", 1) == 0 ){                     \
        _membuf = new hip_mpitest_buffer_device;              \
@@ -67,6 +80,7 @@
    else if (strncmp(_bufchar, "A", 1) == 0) {                \
        _membuf = new hip_mpitest_buffer_async;               \
    }                                                         \
+   SET_MEMBUF_TYPE_VMM(_bufchar, _membuf)                    \
    else {                                                    \
        printf("Invalid input %s\n", _bufchar);               \
        print_help(_argc, _argv);                             \
@@ -93,6 +107,9 @@ static void print_help (int argc, char **argv)
                "         O      Device accessible page locked host memory (i.e. hipHostMalloc)\n"
                "         R      Registered host memory (i.e. hipHostRegister)\n"
                "         A      Asynchronous device memory (i.e. hipMallocAsync)\n"
+#if HIP_MPITEST_HAVE_VMM
+               "         V      Virtual Memory Management device memory (i.e. hipMemCreate/Map)\n"
+#endif
 	       "   elements:  number of elements to send/recv\n"
                "   sleepTime: time in seconds to sleep (optional)\n");
     }

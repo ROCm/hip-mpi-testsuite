@@ -116,8 +116,45 @@ HIP_QUERY_TEST=""
 if [ test "x$HAVE_MPIX_QUERY_ROCM" = "x1" ] ; then
    HIP_QUERY_TEST="hip_query_test"
 fi
-AC_SUBST(HIP_QUERY_TEST)   
+AC_SUBST(HIP_QUERY_TEST)
 AC_SUBST(HAVE_MPIX_QUERY_ROCM)
+
+# Detect whether the HIP driver Virtual Memory Management (VMM) APIs are
+# available (hipMemCreate/hipMemRelease and the VMM-support device attribute)
+# AND the HIP version is recent enough that the memory is meaningfully usable as
+# VMM over UCX. The 'V' memory type is compiled in only when both hold (see
+# HIP_MPITEST_HAVE_VMM). The version floor mirrors UCX, which only recognizes
+# VMM allocations as HSA_VMEM device memory starting with ROCm/HIP 7.1.0.
+hip_mpitest_vmm_min_version=70100000
+AC_LANG_PUSH([C++])
+vmm_save_LDFLAGS="$LDFLAGS"
+vmm_save_LIBS="$LIBS"
+LDFLAGS="$hip_rocm_LDFLAGS $LDFLAGS"
+LIBS="$hip_rocm_LIBS $LIBS"
+CXX_HELPER([if HIP VMM APIs are available],
+           [HIP_MPITEST_HAVE_VMM_INT],
+           [#include <hip/hip_runtime.h>],
+           [hipMemGenericAllocationHandle_t h;
+            hipMemCreate(&h, 4096, nullptr, 0);
+            hipMemRelease(h);
+            (void)hipDeviceAttributeVirtualMemoryManagementSupported;])
+LDFLAGS="$vmm_save_LDFLAGS"
+LIBS="$vmm_save_LIBS"
+
+# HIP_VERSION = MAJOR*10000000 + MINOR*100000 + PATCH
+AC_COMPUTE_INT([hip_mpitest_hip_version], [HIP_VERSION],
+               [#include <hip/hip_version.h>],
+               [hip_mpitest_hip_version=0])
+AC_LANG_POP([C++])
+
+let hip_mpitest_have_vmm=0
+if test "$HIP_MPITEST_HAVE_VMM_INT" = "1" && \
+   test "$hip_mpitest_hip_version" -ge "$hip_mpitest_vmm_min_version" ; then
+    hip_mpitest_have_vmm=1
+fi
+AC_MSG_CHECKING([whether to enable the VMM ('V') memory type])
+AC_MSG_RESULT([$hip_mpitest_have_vmm (HIP_VERSION=$hip_mpitest_hip_version, minimum=$hip_mpitest_vmm_min_version)])
+AC_SUBST(hip_mpitest_have_vmm)
 
 ucc_support=no;
 HIP_UCC_SUPPORT=`ompi_info --parsable | grep coll | grep ucc | wc -l`

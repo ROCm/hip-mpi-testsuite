@@ -26,4 +26,6 @@
 
 #define HIP_MPITEST_PERFRESULTS @hip_mpitest_perfresults@
 
+#define HIP_MPITEST_HAVE_VMM @hip_mpitest_have_vmm@
+
 #endif

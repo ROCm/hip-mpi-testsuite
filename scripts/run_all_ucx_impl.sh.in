@@ -121,4 +121,34 @@ ExecTestSingle "hip_osc_rget_stress"  "4" "1024" "D H"
 ExecTestSingle "hip_osc_rput_stress"  "4" "1024" "D H"
 ExecTest "hip_pt2pt_bl"             "2" "10 876 19680 980571" "D H"
 ExecTest "hip_pt2pt_bl_mult"        "2" "1024" "D H"
+
+# Virtual Memory Management ('V') buffers. Only exercised when the HIP VMM APIs
+# were detected at configure time (@hip_mpitest_have_vmm@). UCX recognizes these
+# buffers as HSA_VMEM device memory and routes them through its VMM copy path.
+if [ "@hip_mpitest_have_vmm@" = "1" ] ; then
+    # A few tests exercise V paired with every other memory type (all pairwise
+    # send/recv combinations); the rest run V<->V only to keep runtime bounded.
+    ExecTest "hip_pt2pt_bl"             "2" "32 1048576" "D H M O R V"
+    ExecTest "hip_pt2pt_nb"             "2" "32 1048576" "D H M O R V"
+    ExecTest "hip_sendtoself"           "1" "32 1048576" "D H M O R V"
+    ExecTest "hip_pt2pt_bsend"          "2" "32 1048576" "V"
+    ExecTest "hip_pt2pt_ssend"          "2" "32 1048576" "V"
+    ExecTest "hip_pt2pt_nb_testall"     "2" "32 1048576" "V"
+    ExecTest "hip_pt2pt_persistent"     "2" "32 1048576" "V"
+    # Collectives with V are limited to alltoallv/allgatherv paired with device
+    # memory only (D, not the host types H/O/R). On this Open MPI build the ROCm
+    # accelerator support does not recognize VMM (device-only) memory in the
+    # host-side memcpy/reduction paths used by the collective components, so it
+    # segfaults whenever such a path touches a VMM buffer. That rules out V for
+    # alltoall/allgather/reduce_scatter[_block]/scan/exscan entirely, for
+    # allreduce/reduce at small message sizes, and for any host+VMM pairing.
+    # The build also lacks the 'accelerator_rocm_vmm_support' MCA param that
+    # would fix this. alltoallv/allgatherv with device-side pairings are the
+    # combinations that work reliably here.
+    ExecTest "hip_alltoallv"            "4" "1024"       "D V"
+    ExecTest "hip_allgatherv"           "4" "1024"       "D V"
+    ExecTest "hip_pt2pt_nb_stress"      "2" "32 1048576" "V"
+    ExecTest "hip_sendtoself_stress"    "1" "32 1048576" "V"
+fi
+
 printf "\n Executed %d Tests (%d passed %d failed)\n" $COUNTER $SUCCESS $FAILED
