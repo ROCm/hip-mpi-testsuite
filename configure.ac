@@ -119,6 +119,46 @@ fi
 AC_SUBST(HIP_QUERY_TEST)
 AC_SUBST(HAVE_MPIX_QUERY_ROCM)
 
+# The hipMallocAsync ('A') memory type is opt-in. It is compiled in only when
+# both of the following hold:
+#   1. the user explicitly requests it with --enable-hipmallocasync, and
+#   2. the HIP stream-ordered memory allocator APIs (hipMallocAsync/
+#      hipFreeAsync) are available.
+enable_async_requested=no
+AC_ARG_ENABLE(hipmallocasync,
+[  --enable-hipmallocasync enable the hipMallocAsync ('A') memory type for testing (default=no)],
+[enable_async_requested=yes])
+
+AC_LANG_PUSH([C++])
+async_save_LDFLAGS="$LDFLAGS"
+async_save_LIBS="$LIBS"
+LDFLAGS="$hip_rocm_LDFLAGS $LDFLAGS"
+LIBS="$hip_rocm_LIBS $LIBS"
+CXX_HELPER([if HIP stream-ordered memory allocator APIs are available],
+           [HIP_MPITEST_HAVE_ASYNC_INT],
+           [#include <hip/hip_runtime.h>],
+           [hipStream_t s;
+            void *p;
+            hipStreamCreate(&s);
+            hipMallocAsync(&p, 4096, s);
+            hipFreeAsync(p, s);
+            hipStreamDestroy(s);])
+LDFLAGS="$async_save_LDFLAGS"
+LIBS="$async_save_LIBS"
+AC_LANG_POP([C++])
+
+let hip_mpitest_have_async=0
+if test "$enable_async_requested" = "yes" ; then
+    if test "$HIP_MPITEST_HAVE_ASYNC_INT" = "1" ; then
+        hip_mpitest_have_async=1
+    else
+        AC_MSG_WARN([--enable-hipmallocasync requested but the required HIP APIs are unavailable; leaving the hipMallocAsync memory type disabled.])
+    fi
+fi
+AC_MSG_CHECKING([whether to enable the hipMallocAsync ('A') memory type])
+AC_MSG_RESULT([$hip_mpitest_have_async (requested=$enable_async_requested)])
+AC_SUBST(hip_mpitest_have_async)
+
 # The VMM ('V') memory type is opt-in. It is compiled in only when ALL of the
 # following hold:
 #   1. the user explicitly requests it with --enable-vmm,

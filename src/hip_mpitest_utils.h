@@ -48,10 +48,20 @@
     }
 
 
-/* VMM ('V') dispatch is compiled only when the HIP VMM driver APIs were
- * detected at configure time. A preprocessor conditional cannot live inside a
- * macro body, so the VMM else-if is factored into its own macro that expands to
- * nothing when HIP_MPITEST_HAVE_VMM is 0. */
+/* 'A' (hipMallocAsync) and 'V' (VMM) dispatch are compiled only when the
+ * corresponding HIP APIs were detected at configure time and the feature was
+ * requested with --enable-hipmallocasync / --enable-vmm. A preprocessor
+ * conditional cannot live inside a macro body, so each else-if is factored
+ * into its own macro that expands to nothing when disabled. */
+#if HIP_MPITEST_HAVE_ASYNC
+#define SET_MEMBUF_TYPE_ASYNC(_bufchar, _membuf)             \
+   else if (strncmp(_bufchar, "A", 1) == 0) {                \
+       _membuf = new hip_mpitest_buffer_async;               \
+   }
+#else
+#define SET_MEMBUF_TYPE_ASYNC(_bufchar, _membuf)
+#endif
+
 #if HIP_MPITEST_HAVE_VMM
 #define SET_MEMBUF_TYPE_VMM(_bufchar, _membuf)               \
    else if (strncmp(_bufchar, "V", 1) == 0) {                \
@@ -77,9 +87,7 @@
    else if (strncmp(_bufchar, "R", 1) == 0) {                \
        _membuf = new hip_mpitest_buffer_hostregister;        \
    }                                                         \
-   else if (strncmp(_bufchar, "A", 1) == 0) {                \
-       _membuf = new hip_mpitest_buffer_async;               \
-   }                                                         \
+   SET_MEMBUF_TYPE_ASYNC(_bufchar, _membuf)                  \
    SET_MEMBUF_TYPE_VMM(_bufchar, _membuf)                    \
    else {                                                    \
        printf("Invalid input %s\n", _bufchar);               \
@@ -106,7 +114,9 @@ static void print_help (int argc, char **argv)
                "         M      Unified memory (i.e hipMallocManaged)\n"
                "         O      Device accessible page locked host memory (i.e. hipHostMalloc)\n"
                "         R      Registered host memory (i.e. hipHostRegister)\n"
+#if HIP_MPITEST_HAVE_ASYNC
                "         A      Asynchronous device memory (i.e. hipMallocAsync)\n"
+#endif
 #if HIP_MPITEST_HAVE_VMM
                "         V      Virtual Memory Management device memory (i.e. hipMemCreate/Map)\n"
 #endif
