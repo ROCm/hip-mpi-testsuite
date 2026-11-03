@@ -268,6 +268,10 @@ class hip_mpitest_buffer_hostregister: public hip_mpitest_buffer {
     }
 };
 
+#if HIP_MPITEST_HAVE_ASYNC
+/* hipMallocAsync-based device memory: the stream-ordered allocator APIs are
+ * detected at configure time (see HIP_MPITEST_HAVE_ASYNC) because they are
+ * not available/working on every supported ROCm version. */
 class hip_mpitest_buffer_async: public hip_mpitest_buffer {
     hipStream_t stream;
     hipError_t  setup_err;
@@ -330,6 +334,7 @@ class hip_mpitest_buffer_async: public hip_mpitest_buffer {
         return hipStreamSynchronize(0);
     }
 };
+#endif  /* HIP_MPITEST_HAVE_ASYNC */
 
 #if HIP_MPITEST_HAVE_VMM
 /* Virtual Memory Management device memory: the buffer is created with the HIP
