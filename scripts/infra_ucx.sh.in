@@ -1,0 +1,55 @@
+#!/bin/bash
+###############################################################################
+# Infrastructure for UCX tests
+###############################################################################
+
+if [ "@HIP_UCC_SUPPORT@" = "0" ] ; then
+    OPTIONS="--mca coll ^hcoll --mca pml ucx --mca osc ucx --mca btl ^openib"
+else
+    OPTIONS="--mca coll ^hcoll --mca coll_ucc_enable 1 --mca coll_ucc_priority 100 --mca pml ucx --mca osc ucx --mca btl ^openib"
+fi
+
+# The hipMallocAsync ('A') memory type is opt-in.
+ASYNC_TYPE=""
+if [ "@hip_mpitest_have_async@" = "1" ] ; then
+    ASYNC_TYPE="A"
+fi
+
+ExecTest() {
+    for NUMELEMS in $3 ; do
+		for MEM1 in $4 ; do
+		    for MEM2 in $4 ; do
+			let COUNTER=COUNTER+1
+			mpirun $OPTIONS -np $2 ../src/$1 -s $MEM1 -r $MEM2 -n $NUMELEMS
+			if [ $? -eq 0 ]
+			then
+			    let SUCCESS=SUCCESS+1
+			else
+			    let FAILED=FAILED+1
+			    FAILED_LIST="$FAILED_LIST\n- $1 (np: $2, elements: $NUMELEMS, mem1: $MEM1, mem2: $MEM2)"
+			fi
+		    done
+		done
+	    done
+}
+
+ExecTestSingle() {
+    for NUMELEMS in $3 ; do
+		for MEM in $4 ; do
+		    let COUNTER=COUNTER+1
+		    mpirun $OPTIONS -np $2 ../src/$1 -s $MEM  -n $NUMELEMS
+		    if [ $? -eq 0 ]
+		    then
+			let SUCCESS=SUCCESS+1
+		    else
+			let FAILED=FAILED+1
+			    FAILED_LIST="$FAILED_LIST\n- $1 (np: $2, elements: $NUMELEMS, mem: $MEM)"
+		    fi
+		done
+	    done
+}
+
+let COUNTER=0
+let SUCCESS=0
+let FAILED=0
+FAILED_LIST=""
