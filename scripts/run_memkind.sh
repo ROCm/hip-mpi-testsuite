@@ -21,11 +21,11 @@
 # IN THE SOFTWARE.
 ###############################################################################
 
-OPTIONS0=" --mca coll ^hcoll"
-OPTIONS1=" --memory-alloc-kinds system,mpi --mca coll ^hcoll"
-OPTIONS2=" --memory-alloc-kinds system,mpi,rocm --mca coll ^hcoll"
-OPTIONS3=" --memory-alloc-kinds system,mpi,rocm:device --mca coll ^hcoll"
-OPTIONS4=" --memory-alloc-kinds system,mpi,rocm,nonsense:host --mca coll ^hcoll"
+OPTIONS0=" --timeout 300 --mca coll ^hcoll"
+OPTIONS1=" --timeout 300 --memory-alloc-kinds system,mpi --mca coll ^hcoll"
+OPTIONS2=" --timeout 300 --memory-alloc-kinds system,mpi,rocm --mca coll ^hcoll"
+OPTIONS3=" --timeout 300 --memory-alloc-kinds system,mpi,rocm:device --mca coll ^hcoll"
+OPTIONS4=" --timeout 300 --memory-alloc-kinds system,mpi,rocm,nonsense:host --mca coll ^hcoll"
 
 
 ExecTest() {
