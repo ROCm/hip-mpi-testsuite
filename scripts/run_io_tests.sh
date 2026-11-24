@@ -24,7 +24,7 @@
 # disabling proto v2 at the moment. the read_all_2D test failes with
 # proto v2 otherwise with UCX 1.17.0.
 # Alternative is to use RNDV_SCHEME=put_zcopy if one wants to use proto v2
-OPTIONS=" --mca pml ^ucx --mca osc ^ucx --mca smsc_accelerator_priority 80 --mca coll ^hcoll"
+OPTIONS=" --timeout 300 --mca pml ^ucx --mca osc ^ucx --mca smsc_accelerator_priority 80 --mca coll ^hcoll"
 
 ExecTest() {
 

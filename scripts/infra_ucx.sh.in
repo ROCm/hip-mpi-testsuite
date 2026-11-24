@@ -4,9 +4,9 @@
 ###############################################################################
 
 if [ "@HIP_UCC_SUPPORT@" = "0" ] ; then
-    OPTIONS="--mca coll ^hcoll --mca pml ucx --mca osc ucx --mca btl ^openib"
+    OPTIONS="--mca coll ^hcoll --mca pml ucx --mca osc ucx --mca btl ^openib --timeout 300"
 else
-    OPTIONS="--mca coll ^hcoll --mca coll_ucc_enable 1 --mca coll_ucc_priority 100 --mca pml ucx --mca osc ucx --mca btl ^openib"
+    OPTIONS="--mca coll ^hcoll --mca coll_ucc_enable 1 --mca coll_ucc_priority 100 --mca pml ucx --mca osc ucx --mca btl ^openib --timeout 300"
 fi
 
 # The hipMallocAsync ('A') memory type is opt-in.

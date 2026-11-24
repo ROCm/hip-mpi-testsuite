@@ -3,10 +3,10 @@
 # Infrastructure for No-UCX tests
 ###############################################################################
 
-OPTIONS1A=" --mca smsc_accelerator_priority 80 --mca mpi_accelerator_rocm_memcpy_async 0 --mca coll ^hcoll --mca pml ^ucx --mca osc ^ucx --mca btl ^openib,uct "
-OPTIONS1B=" --mca smsc_accelerator_priority 80 --mca mpi_accelerator_rocm_memcpy_async 1 --mca coll ^hcoll --mca pml ^ucx --mca osc ^ucx --mca btl ^openib,uct "
-OPTIONS2A=" --mca btl smcuda,tcp,self --mca mpi_accelerator_use_sync_memops true --mca coll ^hcoll --mca pml ^ucx --mca osc ^ucx "
-OPTIONS2B=" --mca btl smcuda,tcp,self --mca mpi_accelerator_use_sync_memops false --mca coll ^hcoll --mca pml ^ucx --mca osc ^ucx "
+OPTIONS1A=" --timeout 300 --mca smsc_accelerator_priority 80 --mca mpi_accelerator_rocm_memcpy_async 0 --mca coll ^hcoll --mca pml ^ucx --mca osc ^ucx --mca btl ^openib,uct "
+OPTIONS1B=" --timeout 300 --mca smsc_accelerator_priority 80 --mca mpi_accelerator_rocm_memcpy_async 1 --mca coll ^hcoll --mca pml ^ucx --mca osc ^ucx --mca btl ^openib,uct "
+OPTIONS2A=" --timeout 300 --mca btl smcuda,tcp,self --mca mpi_accelerator_use_sync_memops true --mca coll ^hcoll --mca pml ^ucx --mca osc ^ucx "
+OPTIONS2B=" --timeout 300 --mca btl smcuda,tcp,self --mca mpi_accelerator_use_sync_memops false --mca coll ^hcoll --mca pml ^ucx --mca osc ^ucx "
 
 ExecTestSm1A() {
     for NUMELEMS in $3 ; do
