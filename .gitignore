@@ -102,6 +102,7 @@ autom4te.cache/
 config.log
 config.status
 scripts/run_all_ucx_impl.sh
+scripts/infra_ucx.sh
 src/hip_mpitest_config.h
 src/Makefile
 benchmarks/Makefile
